@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log in · CineVerse</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="/css/index.css" />
+</head>
+<body class="bg-base-100 text-base-content min-h-screen flex flex-col justify-between">
+  <div id="navbar"></div>
+
+  <main class="flex-1 flex items-center justify-center p-4">
+    <div class="card w-full max-w-md bg-base-200 border border-base-300 shadow-2xl p-6 sm:p-8">
+      <div class="text-center space-y-2 mb-6">
+        <span class="inline-grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-content text-2xl font-black shadow-lg shadow-primary/30">
+          🎬
+        </span>
+        <h1 class="text-3xl font-black font-display tracking-tight">Welcome Back</h1>
+        <p class="text-xs text-base-content/60">Enter your credentials to access your CineVerse account.</p>
+      </div>
+
+      <div id="generalError" class="alert alert-error text-xs mb-4 hidden"></div>
+
+      <form id="loginForm" class="space-y-4">
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium text-xs">Email Address</span></label>
+          <input type="email" id="email" name="email" required autocomplete="email" class="input input-bordered w-full" placeholder="you@domain.com" />
+          <span id="emailError" class="text-error text-xs mt-1 hidden"></span>
+        </div>
+
+        <div class="form-control">
+          <div class="flex justify-between items-center label">
+            <span class="label-text font-medium text-xs">Password</span>
+            <a href="/forgot-password.html" class="text-xs text-primary hover:underline">Forgot password?</a>
+          </div>
+          <input type="password" id="password" name="password" required autocomplete="current-password" class="input input-bordered w-full" placeholder="••••••••" />
+          <span id="passwordError" class="text-error text-xs mt-1 hidden"></span>
+        </div>
+
+        <button type="submit" id="loginBtn" class="btn btn-primary w-full mt-2 font-bold shadow-md">
+          Sign In
+        </button>
+      </form>
+
+      <div class="divider text-xs text-base-content/40 my-6">OR</div>
+
+      <p class="text-center text-xs text-base-content/70">
+        Don't have an account?
+        <a href="/register.html" class="font-bold text-primary hover:underline">Create an account</a>
+      </p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { clearErrors, showFieldErrors, setLoading, showToast } from "/js/auth.js";
+    import "/js/navbar.js";
+
+    const form = document.getElementById("loginForm");
+    const generalError = document.getElementById("generalError");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearErrors();
+      generalError.classList.add("hidden");
+
+      const btn = document.getElementById("loginBtn");
+      setLoading(btn, true, "Signing in...");
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const body = await res.json();
+
+        if (res.ok) {
+          showToast("Login successful!");
+          window.location.href = "/home.html";
+        } else {
+          setLoading(btn, false);
+          if (body.errors) {
+            showFieldErrors(body.errors);
+          } else {
+            generalError.textContent = body.error || "Invalid email or password";
+            generalError.classList.remove("hidden");
+          }
+        }
+      } catch (err) {
+        setLoading(btn, false);
+        generalError.textContent = "Network error. Please try again.";
+        generalError.classList.remove("hidden");
+      }
+    });
+  </script>
+</body>
+</html>

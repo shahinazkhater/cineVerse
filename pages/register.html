@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account · CineVerse</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="/css/index.css" />
+</head>
+<body class="bg-base-100 text-base-content min-h-screen flex flex-col justify-between">
+  <div id="navbar"></div>
+
+  <main class="flex-1 flex items-center justify-center p-4 py-8">
+    <div class="card w-full max-w-lg bg-base-200 border border-base-300 shadow-2xl p-6 sm:p-8">
+      <div class="text-center space-y-2 mb-6">
+        <span class="inline-grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-content text-2xl font-black shadow-lg shadow-primary/30">
+          🎬
+        </span>
+        <h1 class="text-3xl font-black font-display tracking-tight">Create an Account</h1>
+        <p class="text-xs text-base-content/60">Join our community to curate movies and share reviews.</p>
+      </div>
+
+      <div id="generalError" class="alert alert-error text-xs mb-4 hidden"></div>
+
+      <form id="registerForm" class="space-y-4">
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium text-xs">Username *</span></label>
+          <input type="text" id="username" name="username" required autocomplete="username" class="input input-bordered w-full" placeholder="e.g. filmgeek" />
+          <span id="usernameError" class="text-error text-xs mt-1 hidden"></span>
+        </div>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium text-xs">Email Address *</span></label>
+          <input type="email" id="email" name="email" required autocomplete="email" class="input input-bordered w-full" placeholder="you@domain.com" />
+          <span id="emailError" class="text-error text-xs mt-1 hidden"></span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text font-medium text-xs">Password *</span></label>
+            <input type="password" id="password" name="password" required autocomplete="new-password" class="input input-bordered w-full" placeholder="Min 8 chars" />
+            <span id="passwordError" class="text-error text-xs mt-1 hidden"></span>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text font-medium text-xs">Confirm Password *</span></label>
+            <input type="password" id="password_confirmation" name="password_confirmation" required autocomplete="new-password" class="input input-bordered w-full" placeholder="Confirm password" />
+            <span id="password_confirmationError" class="text-error text-xs mt-1 hidden"></span>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-base-content/50">
+          Must contain at least 8 characters, with 1 uppercase, 1 lowercase, 1 digit, and 1 special character.
+        </p>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium text-xs">Profile Picture (optional)</span></label>
+          <input type="file" id="image" name="image" accept="image/*" class="file-input file-input-bordered w-full" />
+          <span id="imageError" class="text-error text-xs mt-1 hidden"></span>
+        </div>
+
+        <button type="submit" id="registerBtn" class="btn btn-primary w-full mt-4 font-bold shadow-md">
+          Create Account
+        </button>
+      </form>
+
+      <div class="divider text-xs text-base-content/40 my-6">OR</div>
+
+      <p class="text-center text-xs text-base-content/70">
+        Already registered?
+        <a href="/login.html" class="font-bold text-primary hover:underline">Log in here</a>
+      </p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { clearErrors, showFieldErrors, setLoading, showToast } from "/js/auth.js";
+    import "/js/navbar.js";
+
+    const form = document.getElementById("registerForm");
+    const generalError = document.getElementById("generalError");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearErrors();
+      generalError.classList.add("hidden");
+
+      const btn = document.getElementById("registerBtn");
+      setLoading(btn, true, "Creating account...");
+
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch("/auth/register", {
+          method: "POST",
+          body: formData,
+        });
+
+        const body = await res.json();
+
+        if (res.ok) {
+          showToast("Account created successfully! Please sign in.");
+          window.location.href = "/login.html";
+        } else {
+          setLoading(btn, false);
+          if (body.errors) {
+            showFieldErrors(body.errors);
+          } else {
+            generalError.textContent = body.error || "Registration failed";
+            generalError.classList.remove("hidden");
+          }
+        }
+      } catch (err) {
+        setLoading(btn, false);
+        generalError.textContent = "Network error. Please try again.";
+        generalError.classList.remove("hidden");
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actors · CineVerse</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="/css/index.css" />
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+  <div id="navbar"></div>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl sm:text-4xl font-black font-display tracking-tight">Actors & Cast</h1>
+        <p class="text-sm text-base-content/60 mt-1">Discover legendary performers and upcoming stars.</p>
+      </div>
+      <div id="addActorBtnContainer"></div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="bg-base-200/60 p-4 rounded-xl border border-base-300">
+      <form id="searchForm" class="flex gap-3">
+        <div class="relative flex-1">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search actor by name..."
+            class="input input-bordered w-full pl-10"
+          />
+          <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+        <button type="button" id="resetBtn" class="btn btn-ghost">Reset</button>
+      </form>
+    </div>
+
+    <!-- Actors Grid -->
+    <div id="actorsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+      <div class="col-span-full py-20 text-center">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Actor Modal -->
+  <dialog id="addActorModal" class="modal">
+    <div class="modal-box bg-base-200 border border-base-300 shadow-2xl">
+      <h3 class="font-display font-bold text-2xl mb-4">Add New Actor</h3>
+      <form id="addActorForm" class="space-y-4">
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium">Actor Name *</span></label>
+          <input type="text" name="name" required class="input input-bordered w-full" placeholder="e.g. Cillian Murphy" />
+          <span id="nameError" class="text-error text-xs mt-1 hidden"></span>
+        </div>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium">Birthdate (optional)</span></label>
+          <input type="date" name="birthdate" class="input input-bordered w-full" />
+          <span id="birthdateError" class="text-error text-xs mt-1 hidden"></span>
+        </div>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium">Photos (up to 5 images)</span></label>
+          <input type="file" name="images" multiple accept="image/*" class="file-input file-input-bordered w-full" />
+          <span id="imagesError" class="text-error text-xs mt-1 hidden"></span>
+        </div>
+
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" onclick="addActorModal.close()">Cancel</button>
+          <button type="submit" id="saveActorBtn" class="btn btn-primary">Save Actor</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <script type="module">
+    import { escapeHtml, getCurrentUser, showToast, setLoading, formatDate, clearErrors, showFieldErrors, getActorImage, DEFAULT_ACTOR_IMAGE } from "/js/auth.js";
+    import "/js/navbar.js";
+
+    async function loadActors() {
+      const search = document.getElementById("searchInput").value.trim();
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+
+      const grid = document.getElementById("actorsGrid");
+      grid.innerHTML = `
+        <div class="col-span-full py-20 text-center">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>`;
+
+      try {
+        const res = await fetch(`/api/actors?${params.toString()}`);
+        const body = await res.json();
+      const actors = Array.isArray(body) ? body : (body.data || []);
+
+        if (actors.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full py-16 text-center bg-base-200/50 rounded-2xl border border-dashed border-base-300">
+              <span class="text-4xl">🎭</span>
+              <h3 class="mt-3 text-lg font-bold">No actors found</h3>
+              <p class="text-sm text-base-content/60 mt-1">Try a different search term or add a new actor.</p>
+            </div>`;
+          return;
+        }
+
+        grid.innerHTML = actors.map(a => {
+          const photoUrl = getActorImage(a);
+
+          return `
+            <div class="card bg-base-200 border border-base-300 shadow-md hover:shadow-xl hover:-translate-y-1 transition duration-300 overflow-hidden flex flex-col justify-between">
+              <figure class="aspect-square bg-base-300 overflow-hidden">
+                <img src="${photoUrl}" alt="${escapeHtml(a.name)}" class="w-full h-full object-cover transition duration-500 hover:scale-105" loading="lazy" onerror="this.src='${DEFAULT_ACTOR_IMAGE}'" />
+              </figure>
+              <div class="card-body p-4 text-center">
+                <h2 class="font-bold text-base font-display truncate" title="${escapeHtml(a.name)}">${escapeHtml(a.name)}</h2>
+                ${a.birthdate ? `<p class="text-xs text-base-content/60">Born ${formatDate(a.birthdate)}</p>` : `<p class="text-xs text-base-content/40">Birthdate not specified</p>`}
+                <div class="card-actions mt-3">
+                  <a href="/actor.html?id=${a._id}" class="btn btn-outline btn-primary btn-sm w-full font-semibold">View Profile</a>
+                </div>
+              </div>
+            </div>`;
+        }).join("");
+      } catch (err) {
+        grid.innerHTML = `<div class="col-span-full py-10 text-center text-error">Failed to load actors.</div>`;
+      }
+    }
+
+    async function init() {
+      const user = await getCurrentUser();
+      if (user) {
+        document.getElementById("addActorBtnContainer").innerHTML = `
+          <button class="btn btn-primary gap-2 shadow-md" onclick="addActorModal.showModal()">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Actor
+          </button>`;
+      }
+
+      await loadActors();
+
+      document.getElementById("searchForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        loadActors();
+      });
+
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        document.getElementById("searchInput").value = "";
+        loadActors();
+      });
+
+      const addForm = document.getElementById("addActorForm");
+      addForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearErrors();
+        const btn = document.getElementById("saveActorBtn");
+        setLoading(btn, true, "Saving...");
+
+        const formData = new FormData(addForm);
+
+        try {
+          const res = await fetch("/api/actors", {
+            method: "POST",
+            body: formData,
+          });
+
+          const body = await res.json();
+          if (res.ok) {
+            showToast("Actor added successfully!");
+            addActorModal.close();
+            window.location.reload();
+          } else {
+            setLoading(btn, false);
+            if (body.errors) {
+              showFieldErrors(body.errors);
+            } else {
+              showToast(body.error || "Failed to add actor", "error");
+            }
+          }
+        } catch {
+          setLoading(btn, false);
+          showToast("Network error", "error");
+        }
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

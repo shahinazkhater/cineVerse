@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Details · CineVerse</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="/css/index.css" />
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+  <div id="navbar"></div>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div id="loadingState" class="py-24 text-center">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+      <p class="mt-4 text-sm text-base-content/60">Loading movie details...</p>
+    </div>
+
+    <div id="contentContainer" class="hidden space-y-10">
+      <!-- Breadcrumbs & Actions -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li><a href="/home.html">Movies</a></li>
+            <li id="breadcrumbTitle" class="text-primary font-semibold truncate max-w-xs">Movie Details</li>
+          </ul>
+        </div>
+        <div id="movieAdminActions" class="hidden flex items-center gap-2">
+          <button id="editMovieBtn" class="btn btn-outline btn-sm">Edit Movie</button>
+          <button id="deleteMovieBtn" class="btn btn-error btn-outline btn-sm">Delete Movie</button>
+        </div>
+      </div>
+
+      <!-- Movie Hero Card -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-base-200 border border-base-300 rounded-3xl p-6 sm:p-8 shadow-xl">
+        <!-- Poster -->
+        <div class="aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl bg-base-300">
+          <img id="moviePoster" src="" alt="Poster" class="w-full h-full object-cover" />
+        </div>
+
+        <!-- Details -->
+        <div class="md:col-span-2 flex flex-col justify-between space-y-6">
+          <div class="space-y-4">
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="movieYear" class="badge badge-primary font-bold text-sm px-3 py-1"></span>
+              <div id="movieGenres" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <h1 id="movieTitle" class="text-3xl sm:text-5xl font-black font-display tracking-tight text-base-content"></h1>
+
+            <p class="text-sm text-base-content/70">
+              Directed by <span id="movieDirector" class="font-semibold text-base-content"></span>
+            </p>
+
+            <div class="p-4 bg-base-300/60 rounded-2xl border border-base-300">
+              <h3 class="text-xs uppercase tracking-wider font-semibold text-base-content/60 mb-2">Overview</h3>
+              <p id="movieDescription" class="text-base-content/90 leading-relaxed text-sm sm:text-base"></p>
+            </div>
+          </div>
+
+          <!-- Average Score Stat -->
+          <div class="stats bg-base-300 border border-base-content/10 shadow">
+            <div class="stat py-3 px-5">
+              <div class="stat-figure text-primary">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+              </div>
+              <div class="stat-title text-xs">Community Rating</div>
+              <div id="statAvgRating" class="stat-value text-2xl text-primary font-black">N/A</div>
+              <div id="statReviewCount" class="stat-desc">0 reviews</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trailer Section -->
+      <div id="trailerSection" class="hidden space-y-4">
+        <h2 class="text-2xl font-black font-display">Watch Trailer</h2>
+        <div class="aspect-video w-full rounded-2xl overflow-hidden border border-base-300 shadow-xl bg-black">
+          <iframe id="trailerIframe" class="w-full h-full" src="" title="Trailer" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+      </div>
+
+      <!-- Cast Section -->
+      <div class="space-y-4">
+        <h2 class="text-2xl font-black font-display">Featured Cast</h2>
+        <div id="castGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <!-- Injected actors -->
+        </div>
+      </div>
+
+      <!-- Reviews Section -->
+      <div class="space-y-6 pt-4 border-t border-base-300">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-black font-display">Community Reviews</h2>
+          <span id="reviewsCountBadge" class="badge badge-primary font-bold"></span>
+        </div>
+
+        <!-- Add Review Form (if authenticated) -->
+        <div id="addReviewContainer" class="bg-base-200 border border-base-300 p-6 rounded-2xl shadow-md">
+          <!-- Injected based on auth -->
+        </div>
+
+        <!-- Reviews List -->
+        <div id="reviewsList" class="space-y-4">
+          <!-- Injected reviews -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Edit Movie Modal -->
+  <dialog id="editMovieModal" class="modal">
+    <div class="modal-box max-w-2xl bg-base-200 border border-base-300 shadow-2xl">
+      <h3 class="font-display font-bold text-2xl mb-4">Edit Movie</h3>
+      <form id="editMovieForm" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text font-medium">Title</span></label>
+            <input type="text" name="title" id="editTitle" required class="input input-bordered w-full" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text font-medium">Year</span></label>
+            <input type="number" name="year" id="editYear" required min="1888" max="2100" class="input input-bordered w-full" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text font-medium">Director</span></label>
+            <input type="text" name="director" id="editDirector" required class="input input-bordered w-full" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text font-medium">Genres (comma-separated)</span></label>
+            <input type="text" name="genres" id="editGenres" required class="input input-bordered w-full" />
+          </div>
+        </div>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium">YouTube Trailer Link</span></label>
+          <input type="url" name="trailerLink" id="editTrailer" required class="input input-bordered w-full" />
+        </div>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium">Description</span></label>
+          <textarea name="description" id="editDescription" required rows="3" class="textarea textarea-bordered w-full"></textarea>
+        </div>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium">Cast / Actors</span></label>
+          <div id="editActorsChecklist" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-3 bg-base-300/50 rounded-lg border border-base-300">
+            <span class="text-xs text-base-content/50">Loading actors...</span>
+          </div>
+        </div>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium">Poster Image (Leave empty to keep existing)</span></label>
+          <input type="file" name="image" accept="image/*" class="file-input file-input-bordered w-full" />
+        </div>
+
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" onclick="editMovieModal.close()">Cancel</button>
+          <button type="submit" id="updateMovieBtn" class="btn btn-primary">Update Movie</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <!-- Edit Review Modal -->
+  <dialog id="editReviewModal" class="modal">
+    <div class="modal-box bg-base-200 border border-base-300 shadow-2xl">
+      <h3 class="font-display font-bold text-xl mb-4">Edit Review</h3>
+      <form id="editReviewForm" class="space-y-4">
+        <input type="hidden" id="editReviewId" />
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium">Rating (0 - 10)</span></label>
+          <input type="number" id="editReviewNumber" min="0" max="10" required class="input input-bordered w-full" />
+        </div>
+        <div class="form-control">
+          <label class="label"><span class="label-text font-medium">Comment (optional)</span></label>
+          <textarea id="editReviewComment" rows="3" class="textarea textarea-bordered w-full"></textarea>
+        </div>
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" onclick="editReviewModal.close()">Cancel</button>
+          <button type="submit" id="saveReviewEditBtn" class="btn btn-primary">Update Review</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <script type="module">
+    import { escapeHtml, getCurrentUser, showToast, setLoading, formatDate, initials, getYoutubeEmbedUrl, getActorImage, DEFAULT_ACTOR_IMAGE, confirmAction } from "/js/auth.js";
+    import "/js/navbar.js";
+
+    const params = new URLSearchParams(window.location.search);
+    const movieId = params.get("id");
+
+    if (!movieId) {
+      window.location.href = "/home.html";
+    }
+
+    let currentMovie = null;
+    let currentUser = null;
+    let allActors = [];
+
+    async function loadAllActors() {
+      if (allActors.length > 0) return allActors;
+      try {
+        const res = await fetch("/api/actors");
+        if (res.ok) {
+          const body = await res.json();
+          allActors = body.data || [];
+        }
+      } catch (err) {
+        console.error(err);
+      }
+      return allActors;
+    }
+
+    async function loadMovieDetails() {
+      try {
+        currentUser = await getCurrentUser();
+        const res = await fetch(`/api/movies/${movieId}`);
+        if (!res.ok) {
+          window.location.href = "/404.html";
+          return;
+        }
+
+        const body = await res.json();
+        currentMovie = body.data;
+
+        document.getElementById("loadingState").classList.add("hidden");
+        document.getElementById("contentContainer").classList.remove("hidden");
+
+        // Page title & breadcrumb
+        document.title = `${currentMovie.title} · CineVerse`;
+        document.getElementById("breadcrumbTitle").textContent = currentMovie.title;
+
+        // Poster
+        const posterUrl = currentMovie.image ? `/uploads/${currentMovie.image}` : `https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80`;
+        document.getElementById("moviePoster").src = posterUrl;
+
+        // Details
+        document.getElementById("movieTitle").textContent = currentMovie.title;
+        document.getElementById("movieYear").textContent = currentMovie.year;
+        document.getElementById("movieDirector").textContent = currentMovie.director;
+        document.getElementById("movieDescription").textContent = currentMovie.description;
+
+        // Genres
+        const genresContainer = document.getElementById("movieGenres");
+        genresContainer.innerHTML = (currentMovie.genres || []).map(g => `
+          <span class="badge badge-outline text-xs">${escapeHtml(g)}</span>
+        `).join("");
+
+        // Trailer
+        const embedUrl = getYoutubeEmbedUrl(currentMovie.trailerLink);
+        if (embedUrl) {
+          document.getElementById("trailerIframe").src = embedUrl;
+          document.getElementById("trailerSection").classList.remove("hidden");
+        }
+
+        // Admin actions (if authenticated)
+        if (currentUser) {
+          document.getElementById("movieAdminActions").classList.remove("hidden");
+        }
+
+        // Featured Cast
+        const castGrid = document.getElementById("castGrid");
+        const actors = currentMovie.actors || [];
+        if (actors.length > 0) {
+          castGrid.innerHTML = actors.map(a => {
+            const photoUrl = getActorImage(a);
+            return `
+              <a href="/actor.html?id=${a._id}" class="card bg-base-300 border border-base-content/10 shadow-sm hover:border-primary transition group text-center p-3 rounded-2xl">
+                <figure class="aspect-square rounded-xl overflow-hidden mb-2 bg-base-200">
+                  <img src="${photoUrl}" alt="${escapeHtml(a.name)}" class="w-full h-full object-cover group-hover:scale-105 transition" onerror="this.src='${DEFAULT_ACTOR_IMAGE}'" />
+                </figure>
+                <p class="font-bold text-xs truncate group-hover:text-primary transition">${escapeHtml(a.name)}</p>
+              </a>`;
+          }).join("");
+        } else {
+          castGrid.innerHTML = `<p class="col-span-full text-sm text-base-content/50">No cast members listed for this movie.</p>`;
+        }
+
+        // Reviews & Ratings
+        renderReviews(currentMovie.reviews || []);
+        renderAddReviewBox();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderReviews(reviews) {
+      const list = document.getElementById("reviewsList");
+      const count = reviews.length;
+      document.getElementById("reviewsCountBadge").textContent = `${count} ${count === 1 ? 'Review' : 'Reviews'}`;
+      document.getElementById("statReviewCount").textContent = `${count} ${count === 1 ? 'review' : 'reviews'}`;
+
+      if (count === 0) {
+        document.getElementById("statAvgRating").textContent = "N/A";
+        list.innerHTML = `
+          <div class="py-8 text-center bg-base-200/50 rounded-2xl border border-dashed border-base-300">
+            <p class="text-sm text-base-content/60">No reviews yet. Be the first to share your thoughts!</p>
+          </div>`;
+        return;
+      }
+
+      const avg = (reviews.reduce((sum, r) => sum + r.number, 0) / count).toFixed(1);
+      document.getElementById("statAvgRating").textContent = `${avg}/10`;
+
+      list.innerHTML = reviews.map(r => {
+        const author = r.user || {};
+        const isOwner = currentUser && (currentUser._id === author._id || currentUser._id === author);
+        const avatarUrl = author.image ? `/uploads/${author.image}` : null;
+
+        return `
+          <div class="bg-base-200 border border-base-300 p-5 rounded-2xl shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-xs overflow-hidden">
+                  ${avatarUrl ? `<img src="${avatarUrl}" class="w-full h-full object-cover" />` : initials(author.username || 'User')}
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-base-content">${escapeHtml(author.username || 'Anonymous')}</p>
+                  <p class="text-xs text-base-content/50">${formatDate(r.createdAt)}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="badge badge-primary font-black px-3 py-2 text-sm">★ ${r.number}/10</span>
+                ${isOwner ? `
+                  <button class="btn btn-ghost btn-xs edit-rev-btn" data-id="${r._id}" data-num="${r.number}" data-comment="${escapeHtml(r.comment || '')}">Edit</button>
+                  <button class="btn btn-ghost btn-xs text-error delete-rev-btn" data-id="${r._id}">Delete</button>
+                ` : ''}
+              </div>
+            </div>
+            ${r.comment ? `<p class="text-sm text-base-content/80 leading-relaxed pl-12">${escapeHtml(r.comment)}</p>` : ''}
+          </div>`;
+      }).join("");
+
+      // Bind review edit/delete buttons
+      document.querySelectorAll(".edit-rev-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.getElementById("editReviewId").value = btn.dataset.id;
+          document.getElementById("editReviewNumber").value = btn.dataset.num;
+          document.getElementById("editReviewComment").value = btn.dataset.comment;
+          editReviewModal.showModal();
+        });
+      });
+
+      document.querySelectorAll(".delete-rev-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          confirmAction({
+            title: "Delete Review",
+            message: "Are you sure you want to delete this review? This action cannot be undone.",
+            onConfirm: async () => {
+              try {
+                const res = await fetch(`/api/reviews/${btn.dataset.id}`, { method: "DELETE" });
+                if (res.ok) {
+                  showToast("Review deleted");
+                  window.location.reload();
+                } else {
+                  showToast("Failed to delete review", "error");
+                }
+              } catch {
+                showToast("Network error", "error");
+              }
+            },
+          });
+        });
+      });
+    }
+
+    function renderAddReviewBox() {
+      const container = document.getElementById("addReviewContainer");
+      if (!currentUser) {
+        container.innerHTML = `
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <p class="font-bold text-base">Want to review this movie?</p>
+              <p class="text-xs text-base-content/60">Log in to leave your rating and commentary.</p>
+            </div>
+            <a href="/login.html" class="btn btn-primary btn-sm">Log in to Review</a>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <h3 class="font-bold font-display text-lg mb-3">Add Your Review</h3>
+        <form id="addReviewForm" class="space-y-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text font-medium text-sm">Rating (0 - 10) *</span></label>
+            <input type="number" id="reviewNumber" name="number" min="0" max="10" required class="input input-bordered w-full" placeholder="e.g. 9" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text font-medium text-sm">Comment (optional)</span></label>
+            <textarea id="reviewComment" name="comment" rows="3" class="textarea textarea-bordered w-full" placeholder="What did you think of the film?"></textarea>
+          </div>
+          <button type="submit" id="submitReviewBtn" class="btn btn-primary btn-sm">Post Review</button>
+        </form>`;
+
+      document.getElementById("addReviewForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("submitReviewBtn");
+        setLoading(btn, true, "Posting...");
+
+        const number = document.getElementById("reviewNumber").value;
+        const comment = document.getElementById("reviewComment").value;
+
+        try {
+          const res = await fetch(`/api/movies/${movieId}/reviews`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ number, comment }),
+          });
+
+          if (res.ok) {
+            showToast("Review submitted!");
+            window.location.reload();
+          } else {
+            const body = await res.json();
+            setLoading(btn, false);
+            showToast(body.error || "Failed to add review", "error");
+          }
+        } catch {
+          setLoading(btn, false);
+          showToast("Network error", "error");
+        }
+      });
+    }
+
+    // Modal forms setup
+    document.getElementById("editReviewForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const revId = document.getElementById("editReviewId").value;
+      const number = document.getElementById("editReviewNumber").value;
+      const comment = document.getElementById("editReviewComment").value;
+
+      const res = await fetch(`/api/reviews/${revId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ number, comment }),
+      });
+
+      if (res.ok) {
+        showToast("Review updated");
+        window.location.reload();
+      } else {
+        showToast("Failed to update review", "error");
+      }
+    });
+
+    document.getElementById("deleteMovieBtn")?.addEventListener("click", () => {
+      confirmAction({
+        title: "Delete Movie",
+        message: "Are you sure you want to delete this movie? All associated reviews will also be removed.",
+        onConfirm: async () => {
+          const res = await fetch(`/api/movies/${movieId}`, { method: "DELETE" });
+          if (res.ok) {
+            showToast("Movie deleted");
+            window.location.href = "/home.html";
+          } else {
+            showToast("Failed to delete movie", "error");
+          }
+        },
+      });
+    });
+
+    document.getElementById("editMovieBtn")?.addEventListener("click", async () => {
+      if (!currentMovie) return;
+      document.getElementById("editTitle").value = currentMovie.title;
+      document.getElementById("editYear").value = currentMovie.year;
+      document.getElementById("editDirector").value = currentMovie.director;
+      document.getElementById("editGenres").value = (currentMovie.genres || []).join(", ");
+      document.getElementById("editTrailer").value = currentMovie.trailerLink;
+      document.getElementById("editDescription").value = currentMovie.description;
+
+      // Populate actors checklist
+      const actorsList = await loadAllActors();
+      const currentActorIds = (currentMovie.actors || []).map(a => (a._id || a).toString());
+      const checklist = document.getElementById("editActorsChecklist");
+
+      checklist.innerHTML = actorsList.length
+        ? actorsList.map(a => {
+            const isChecked = currentActorIds.includes(a._id.toString());
+            return `
+              <label class="cursor-pointer label gap-2 bg-base-100 px-3 py-1.5 rounded-lg border border-base-300 hover:border-primary">
+                <input type="checkbox" name="editActors" value="${a._id}" ${isChecked ? 'checked' : ''} class="checkbox checkbox-xs checkbox-primary" />
+                <span class="label-text text-xs">${escapeHtml(a.name)}</span>
+              </label>
+            `;
+          }).join("")
+        : `<span class="text-xs text-base-content/50">No actors available.</span>`;
+
+      editMovieModal.showModal();
+    });
+
+    document.getElementById("editMovieForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = document.getElementById("editMovieForm");
+      const formData = new FormData(form);
+      const btn = document.getElementById("updateMovieBtn");
+      setLoading(btn, true, "Updating...");
+
+      const checkedActors = Array.from(form.querySelectorAll("input[name='editActors']:checked")).map(el => el.value);
+      formData.delete("editActors");
+      formData.delete("actors");
+      formData.append("actors", JSON.stringify(checkedActors));
+
+      try {
+        const res = await fetch(`/api/movies/${movieId}`, {
+          method: "PATCH",
+          body: formData,
+        });
+
+        if (res.ok) {
+          showToast("Movie updated");
+          window.location.reload();
+        } else {
+          setLoading(btn, false);
+          showToast("Failed to update movie", "error");
+        }
+      } catch {
+        setLoading(btn, false);
+        showToast("Network error", "error");
+      }
+    });
+
+    loadMovieDetails();
+  </script>
+</body>
+</html>
